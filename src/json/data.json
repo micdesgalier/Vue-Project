@@ -1,0 +1,77 @@
+{
+    "employees": [
+        { 
+            "first_name":"John", 
+            "last_name":"Doe",
+            "age": 24,
+            "teams": [
+                {
+                    "id": 3,
+                    "name": "DEV"
+                },
+                {
+                    "id": 2,
+                    "name": "SECURITY"
+                }
+            ]
+        },
+        { 
+            "first_name":"Anna", 
+            "last_name":"Jones",
+            "age": 45,
+            "teams": [
+                {
+                    "id": 3,
+                    "name": "DEV"
+                },
+                {
+                    "id": 1,
+                    "name": "MARKETING"
+                }
+            ]
+        },
+        { 
+            "first_name":"Tomi", 
+            "last_name":"Alvaro",
+            "age": 37,
+            "teams": [
+                {
+                    "id": 1,
+                    "name": "MARKETING"
+                },
+                {
+                    "id": 2,
+                    "name": "SECURITY"
+                }
+            ]
+        }
+    ],
+    "directors": [
+        { 
+            "first_name":"Jimmy", 
+            "last_name":"Smiths",
+            "age": 52,
+            "teams": [
+                {
+                    "id": 3,
+                    "name": "DEV"
+                },
+                {
+                    "id": 2,
+                    "name": "SECURITY"
+                }
+            ]
+        },
+        { 
+            "first_name":"Richard", 
+            "last_name":"Brown",
+            "age": 54,
+            "teams": [
+                {
+                    "id": 1,
+                    "name": "MARKETING"
+                }
+            ]
+        }
+    ]
+}
