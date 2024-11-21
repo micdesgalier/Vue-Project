@@ -44,13 +44,32 @@
           <strong>Name:</strong> {{ doc.doc.name }} <br />
           <strong>Age:</strong> {{ doc.doc.age }} <br />
           <strong>Occupation:</strong> {{ doc.doc.occupation }} <br />
+          <button @click="startEditing(doc, 'local')">Edit</button>
           <button @click="deleteDoc(doc.id, 'local')">Delete</button>
+          <!-- Formulaire d'édition -->
+          <div v-if="editingDoc && editingDoc.id === doc.id && editingDoc.source === 'local'">
+            <form @submit.prevent="saveEdit">
+              <label>
+                Name:
+                <input v-model="editingDoc.data.name" type="text" required />
+              </label>
+              <label>
+                Age:
+                <input v-model.number="editingDoc.data.age" type="number" required />
+              </label>
+              <label>
+                Occupation:
+                <input v-model="editingDoc.data.occupation" type="text" required />
+              </label>
+              <button type="submit">Save</button>
+              <button type="button" @click="cancelEditing">Cancel</button>
+            </form>
+          </div>
         </li>
       </ul>
       <p v-else>No local documents found.</p>
     </div>
 
-    <!-- Affichage des documents distants -->
     <div class="documents">
       <h2>Remote Documents ({{ remoteDocs.length }})</h2>
       <ul v-if="remoteDocs.length > 0">
@@ -59,7 +78,27 @@
           <strong>Name:</strong> {{ doc.doc.name }} <br />
           <strong>Age:</strong> {{ doc.doc.age }} <br />
           <strong>Occupation:</strong> {{ doc.doc.occupation }} <br />
+          <button @click="startEditing(doc, 'remote')">Edit</button>
           <button @click="deleteDoc(doc.id, 'remote')">Delete</button>
+          <!-- Formulaire d'édition -->
+          <div v-if="editingDoc && editingDoc.id === doc.id && editingDoc.source === 'remote'">
+            <form @submit.prevent="saveEdit">
+              <label>
+                Name:
+                <input v-model="editingDoc.data.name" type="text" required />
+              </label>
+              <label>
+                Age:
+                <input v-model.number="editingDoc.data.age" type="number" required />
+              </label>
+              <label>
+                Occupation:
+                <input v-model="editingDoc.data.occupation" type="text" required />
+              </label>
+              <button type="submit">Save</button>
+              <button type="button" @click="cancelEditing">Cancel</button>
+            </form>
+          </div>
         </li>
       </ul>
       <p v-else>No remote documents found.</p>
@@ -80,10 +119,11 @@ export default {
       btnValue: 0,
       localDb: null,
       remoteDb: null,
-      localDocs: [], // Liste des documents locaux
-      remoteDocs: [], // Liste des documents distants
-      newDoc: { name: '', age: null, occupation: '', targetDb: 'local' }, // Nouveau document
-      errorMessage: null, // Message d'erreur
+      localDocs: [],
+      remoteDocs: [],
+      newDoc: { name: '', age: null, occupation: '', targetDb: 'local' },
+      editingDoc: null, // État de l'édition
+      errorMessage: null,
     };
   },
   methods: {
@@ -96,7 +136,7 @@ export default {
       }
     },
     getAllDocs() {
-      // Récupérer les documents locaux
+      // Charger les documents locaux
       this.localDb
         .allDocs({ include_docs: true, descending: true })
         .then((result) => {
@@ -106,7 +146,7 @@ export default {
           this.errorMessage = 'Error fetching local documents: ' + err.message;
         });
 
-      // Récupérer les documents distants
+      // Charger les documents distants
       this.remoteDb
         .allDocs({ include_docs: true, descending: true })
         .then((result) => {
@@ -134,8 +174,8 @@ export default {
       targetDb
         .put(newDocument)
         .then(() => {
-          this.newDoc = { name: '', age: null, occupation: '', targetDb: 'local' }; // Réinitialiser le formulaire
-          this.getAllDocs(); // Rafraîchir les documents
+          this.newDoc = { name: '', age: null, occupation: '', targetDb: 'local' };
+          this.getAllDocs();
         })
         .catch((err) => {
           this.errorMessage = 'Error adding document: ' + err.message;
@@ -147,10 +187,40 @@ export default {
       db.get(id)
         .then((doc) => db.remove(doc))
         .then(() => {
-          this.getAllDocs(); // Rafraîchir les documents
+          this.getAllDocs();
         })
         .catch((err) => {
           this.errorMessage = `Error deleting document from ${targetDb}: ` + err.message;
+        });
+    },
+    startEditing(doc, source) {
+      this.editingDoc = {
+        id: doc.id,
+        source,
+        data: { ...doc.doc },
+      };
+    },
+    cancelEditing() {
+      this.editingDoc = null;
+    },
+    saveEdit() {
+      const targetDb = this.editingDoc.source === 'local' ? this.localDb : this.remoteDb;
+
+      targetDb
+        .get(this.editingDoc.id)
+        .then((originalDoc) => {
+          const updatedDoc = {
+            ...originalDoc,
+            ...this.editingDoc.data,
+          };
+          return targetDb.put(updatedDoc);
+        })
+        .then(() => {
+          this.editingDoc = null;
+          this.getAllDocs();
+        })
+        .catch((err) => {
+          this.errorMessage = `Error saving document: ` + err.message;
         });
     },
     syncLocalToRemote() {
