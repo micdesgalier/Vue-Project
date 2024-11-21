@@ -3,7 +3,7 @@
     <h1>This is my page {{ btnValue }}</h1>
 
     <div class="buttons">
-      <button @click="getAllDocs">Get All Docs</button>
+      <button @click="getAllDocs">Get All Documents</button>
       <button @click="syncLocalToRemote">Sync Local to Remote</button>
       <button @click="syncRemoteToLocal">Sync Remote to Local</button>
     </div>
