@@ -4,35 +4,65 @@
 
     <div class="buttons">
       <button @click="getAllDocs">Get All Docs</button>
-      <button v-if="lastCreatedId" @click="getOneDoc(lastCreatedId)">Get Last Created Doc</button>
-      <button @click="addDemoDoc">Add Demo Doc</button>
-      <button v-if="lastCreatedId" @click="updateDoc(lastCreatedId)">Update Last Created Doc</button>
-      <button v-if="lastCreatedId" @click="deleteDoc(lastCreatedId)">Delete Last Created Doc</button>
       <button @click="syncLocalToRemote">Sync Local to Remote</button>
       <button @click="syncRemoteToLocal">Sync Remote to Local</button>
     </div>
 
-    <!-- Affichage des documents -->
+    <!-- Formulaire pour ajouter un document -->
+    <div class="add-document">
+      <h2>Add a New Document</h2>
+      <form @submit.prevent="addNewDoc">
+        <label>
+          Name:
+          <input v-model="newDoc.name" type="text" required />
+        </label>
+        <label>
+          Age:
+          <input v-model.number="newDoc.age" type="number" required />
+        </label>
+        <label>
+          Occupation:
+          <input v-model="newDoc.occupation" type="text" required />
+        </label>
+        <label>
+          Add to:
+          <select v-model="newDoc.targetDb" required>
+            <option value="local">Local Database</option>
+            <option value="remote">Remote Database</option>
+          </select>
+        </label>
+        <button type="submit">Add Document</button>
+      </form>
+    </div>
+
+    <!-- Affichage des documents locaux -->
     <div class="documents">
-      <h2>All Documents ({{ allDocs.length }})</h2>
-      <ul v-if="allDocs.length > 0">
-        <li v-for="doc in allDocs" :key="doc.id">
+      <h2>Local Documents ({{ localDocs.length }})</h2>
+      <ul v-if="localDocs.length > 0">
+        <li v-for="doc in localDocs" :key="doc.id">
           <strong>ID:</strong> {{ doc.id }} <br />
           <strong>Name:</strong> {{ doc.doc.name }} <br />
           <strong>Age:</strong> {{ doc.doc.age }} <br />
-          <strong>Occupation:</strong> {{ doc.doc.occupation }}
+          <strong>Occupation:</strong> {{ doc.doc.occupation }} <br />
+          <button @click="deleteDoc(doc.id, 'local')">Delete</button>
         </li>
       </ul>
-      <p v-else>No documents found.</p>
+      <p v-else>No local documents found.</p>
     </div>
 
-    <!-- Dernier document récupéré -->
-    <div class="last-doc" v-if="lastDoc">
-      <h2>Last Retrieved Document</h2>
-      <p><strong>ID:</strong> {{ lastDoc._id }}</p>
-      <p><strong>Name:</strong> {{ lastDoc.name }}</p>
-      <p><strong>Age:</strong> {{ lastDoc.age }}</p>
-      <p><strong>Occupation:</strong> {{ lastDoc.occupation }}</p>
+    <!-- Affichage des documents distants -->
+    <div class="documents">
+      <h2>Remote Documents ({{ remoteDocs.length }})</h2>
+      <ul v-if="remoteDocs.length > 0">
+        <li v-for="doc in remoteDocs" :key="doc.id">
+          <strong>ID:</strong> {{ doc.id }} <br />
+          <strong>Name:</strong> {{ doc.doc.name }} <br />
+          <strong>Age:</strong> {{ doc.doc.age }} <br />
+          <strong>Occupation:</strong> {{ doc.doc.occupation }} <br />
+          <button @click="deleteDoc(doc.id, 'remote')">Delete</button>
+        </li>
+      </ul>
+      <p v-else>No remote documents found.</p>
     </div>
 
     <!-- Message d'erreur -->
@@ -50,11 +80,10 @@ export default {
       btnValue: 0,
       localDb: null,
       remoteDb: null,
-      lastCreatedId: null,
-      allDocs: [], // Liste des documents
-      lastDoc: null, // Dernier document récupéré
+      localDocs: [], // Liste des documents locaux
+      remoteDocs: [], // Liste des documents distants
+      newDoc: { name: '', age: null, occupation: '', targetDb: 'local' }, // Nouveau document
       errorMessage: null, // Message d'erreur
-      syncHandler: null,
     };
   },
   methods: {
@@ -67,66 +96,61 @@ export default {
       }
     },
     getAllDocs() {
+      // Récupérer les documents locaux
       this.localDb
         .allDocs({ include_docs: true, descending: true })
         .then((result) => {
-          this.allDocs = result.rows;
+          this.localDocs = result.rows;
         })
         .catch((err) => {
-          this.errorMessage = 'Error fetching documents: ' + err.message;
+          this.errorMessage = 'Error fetching local documents: ' + err.message;
         });
-    },
-    getOneDoc(id) {
-      this.localDb
-        .get(id)
-        .then((doc) => {
-          this.lastDoc = doc;
+
+      // Récupérer les documents distants
+      this.remoteDb
+        .allDocs({ include_docs: true, descending: true })
+        .then((result) => {
+          this.remoteDocs = result.rows;
         })
         .catch((err) => {
-          this.errorMessage = 'Error fetching document: ' + err.message;
+          this.errorMessage = 'Error fetching remote documents: ' + err.message;
         });
     },
-    addDemoDoc() {
-      const demoDoc = {
+    addNewDoc() {
+      if (!this.newDoc.name || !this.newDoc.age || !this.newDoc.occupation) {
+        this.errorMessage = 'Please fill out all fields.';
+        return;
+      }
+
+      const newDocument = {
         _id: new Date().toISOString(),
-        name: 'Demo User',
-        age: Math.floor(Math.random() * 50) + 20,
-        occupation: 'Developer',
+        name: this.newDoc.name,
+        age: this.newDoc.age,
+        occupation: this.newDoc.occupation,
       };
-      this.localDb
-        .put(demoDoc)
-        .then((response) => {
-          this.lastCreatedId = response.id;
+
+      const targetDb = this.newDoc.targetDb === 'local' ? this.localDb : this.remoteDb;
+
+      targetDb
+        .put(newDocument)
+        .then(() => {
+          this.newDoc = { name: '', age: null, occupation: '', targetDb: 'local' }; // Réinitialiser le formulaire
           this.getAllDocs(); // Rafraîchir les documents
         })
         .catch((err) => {
           this.errorMessage = 'Error adding document: ' + err.message;
         });
     },
-    updateDoc(id) {
-      this.localDb
-        .get(id)
-        .then((doc) => {
-          doc.age += 1;
-          return this.localDb.put(doc);
-        })
+    deleteDoc(id, targetDb) {
+      const db = targetDb === 'local' ? this.localDb : this.remoteDb;
+
+      db.get(id)
+        .then((doc) => db.remove(doc))
         .then(() => {
           this.getAllDocs(); // Rafraîchir les documents
         })
         .catch((err) => {
-          this.errorMessage = 'Error updating document: ' + err.message;
-        });
-    },
-    deleteDoc(id) {
-      this.localDb
-        .get(id)
-        .then((doc) => this.localDb.remove(doc))
-        .then(() => {
-          this.lastCreatedId = null;
-          this.getAllDocs(); // Rafraîchir les documents
-        })
-        .catch((err) => {
-          this.errorMessage = 'Error deleting document: ' + err.message;
+          this.errorMessage = `Error deleting document from ${targetDb}: ` + err.message;
         });
     },
     syncLocalToRemote() {
@@ -134,17 +158,18 @@ export default {
         .replicate.to(this.remoteDb)
         .on('complete', () => {
           alert('Sync from local to remote complete');
+          this.getAllDocs();
         })
         .on('error', (err) => {
           this.errorMessage = 'Error syncing local to remote: ' + err.message;
         });
     },
     syncRemoteToLocal() {
-      this.localDb
-        .replicate.from(this.remoteDb)
+      this.remoteDb
+        .replicate.to(this.localDb)
         .on('complete', () => {
           alert('Sync from remote to local complete');
-          this.getAllDocs(); // Rafraîchir les documents après synchronisation
+          this.getAllDocs();
         })
         .on('error', (err) => {
           this.errorMessage = 'Error syncing remote to local: ' + err.message;
@@ -189,10 +214,36 @@ export default {
 .documents h2 {
   margin-bottom: 10px;
 }
-
 .buttons button {
   margin-right: 10px;
   margin-bottom: 10px;
+}
+.add-document {
+  margin-bottom: 20px;
+}
+.add-document form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.add-document label {
+  display: flex;
+  flex-direction: column;
+}
+.add-document button {
+  align-self: flex-start;
+}
+.documents li button {
+  margin-top: 10px;
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.documents li button:hover {
+  background-color: #ff1a1a;
 }
 @media (min-width: 1024px) {
   .ex {
