@@ -18,9 +18,9 @@ const router = createRouter({
       component: () => import('../views/AboutView.vue')
     },
     {
-      path: '/btn',
-      name: 'ex',
-      component: () => import('../views/ExView.vue')
+      path: '/couchDB',
+      name: 'couchDB',
+      component: () => import('../views/PouchDBView.vue')
     }
   ]
 })

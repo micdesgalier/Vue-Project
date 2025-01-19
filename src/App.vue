@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router';
-import HelloWorld from './components/HelloWorld.vue';
-import { onMounted } from 'vue'; // Importe le hook onMounted de Vue
-import PouchDB from 'Pouchdb'; // Importe PouchDB
+import { RouterLink, RouterView } from 'vue-router'
+import HelloWorld from './components/HelloWorld.vue'
+
 </script>
 
 <template>
@@ -15,9 +14,10 @@ import PouchDB from 'Pouchdb'; // Importe PouchDB
       <nav>
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
-        <RouterLink to="/btn">Ma Page</RouterLink>
+        <RouterLink to="/couchDB">CouchDB</RouterLink>
       </nav>
     </div>
+
   </header>
 
   <RouterView />
@@ -27,6 +27,7 @@ import PouchDB from 'Pouchdb'; // Importe PouchDB
 header {
   line-height: 1.5;
   max-height: 100vh;
+  max-width: 50vw;
 }
 
 .logo {

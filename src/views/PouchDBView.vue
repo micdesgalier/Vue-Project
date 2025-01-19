@@ -1,11 +1,10 @@
 <template>
   <div class="ex">
-    <h1>This is my page {{ btnValue }}</h1>
-
     <div class="buttons">
       <button @click="getAllDocs">Get All Documents</button>
       <button @click="syncLocalToRemote">Sync Local to Remote</button>
       <button @click="syncRemoteToLocal">Sync Remote to Local</button>
+      <button @click="generateMockData">Generate Mock Data</button>
     </div>
 
     <!-- Formulaire pour ajouter un document -->
@@ -33,6 +32,11 @@
         </label>
         <button type="submit">Add Document</button>
       </form>
+    </div>
+
+    <div class="search">
+      <h2>Search Documents</h2>
+      <input v-model="searchQuery" @input="searchDocuments" type="text" placeholder="Search by name" />
     </div>
 
     <!-- Affichage des documents locaux -->
@@ -112,7 +116,12 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { ref } from 'vue'
+import PouchDB from 'pouchdb'
+import findPlugin from 'pouchdb-find'
+PouchDB.plugin(findPlugin)
+
 export default {
   data() {
     return {
@@ -124,6 +133,7 @@ export default {
       newDoc: { name: '', age: null, occupation: '', targetDb: 'local' },
       editingDoc: null, // État de l'édition
       errorMessage: null,
+      searchQuery: '',
     };
   },
   methods: {
@@ -131,6 +141,11 @@ export default {
       try {
         this.localDb = new PouchDB('local_worker');
         this.remoteDb = new PouchDB('http://admin:admin123@127.0.0.1:5984/worker');
+
+        // Créer un index sur le champ "name"
+        this.localDb.createIndex({ index: { fields: ['name'] } })
+          .then(() => console.log('Index on "name" created'))
+          .catch(err => console.error('Error creating index:', err));
       } catch (error) {
         this.errorMessage = 'Failed to initialize databases: ' + error.message;
       }
@@ -244,6 +259,44 @@ export default {
         .on('error', (err) => {
           this.errorMessage = 'Error syncing remote to local: ' + err.message;
         });
+    },
+    generateMockData() {
+      console.log("IN");
+      const mockData = [];
+      for (let i = 0; i < 20; i++) {
+        const doc = {
+          _id: new Date().toISOString() + '-' + i,
+          name: `Mock Name ${i + 1}`,
+          age: Math.floor(Math.random() * 60) + 18, // Âge entre 18 et 77
+          occupation: `Occupation ${i + 1}`,
+        };
+        mockData.push(doc);
+      }
+
+      this.localDb.bulkDocs(mockData)
+        .then(() => {
+          alert('20 mock documents added successfully!');
+          this.getAllDocs();
+        })
+        .catch(err => {
+          this.errorMessage = 'Error generating mock data: ' + err.message;
+        });
+    },
+    searchDocuments() {
+      if (this.searchQuery.trim() === '') {
+        this.getAllDocs();
+        return;
+      }
+
+      this.localDb.find({
+        selector: { name: { $regex: new RegExp(this.searchQuery, 'i') } }
+      })
+      .then(result => {
+        this.localDocs = result.docs.map(doc => ({ id: doc._id, doc }));
+      })
+      .catch(err => {
+        this.errorMessage = 'Error searching documents: ' + err.message;
+      });
     },
   },
   mounted() {
