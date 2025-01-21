@@ -1,5 +1,6 @@
 <template>
   <div class="ex">
+    <!-- Boutons -->
     <div class="buttons">
       <button @click="getAllDocs">Get All Documents</button>
       <button @click="syncLocalToRemote">Sync Local to Remote</button>
@@ -7,7 +8,7 @@
       <button @click="generateMockData">Generate Mock Data</button>
     </div>
 
-    <!-- Formulaire pour ajouter un document -->
+    <!-- Formulaire d'ajout -->
     <div class="add-document">
       <h2>Add a New Document</h2>
       <form @submit.prevent="addNewDoc">
@@ -34,78 +35,42 @@
       </form>
     </div>
 
-    <div class="search">
-      <h2>Search Documents</h2>
-      <input v-model="searchQuery" @input="searchDocuments" type="text" placeholder="Search by name" />
-    </div>
-
-    <!-- Affichage des documents locaux -->
+    <!-- Documents locaux -->
     <div class="documents">
       <h2>Local Documents ({{ localDocs.length }})</h2>
-      <ul v-if="localDocs.length > 0">
+      <ul>
         <li v-for="doc in localDocs" :key="doc.id">
-          <strong>ID:</strong> {{ doc.id }} <br />
-          <strong>Name:</strong> {{ doc.doc.name }} <br />
-          <strong>Age:</strong> {{ doc.doc.age }} <br />
-          <strong>Occupation:</strong> {{ doc.doc.occupation }} <br />
-          <button @click="startEditing(doc, 'local')">Edit</button>
-          <button @click="deleteDoc(doc.id, 'local')">Delete</button>
-          <!-- Formulaire d'édition -->
-          <div v-if="editingDoc && editingDoc.id === doc.id && editingDoc.source === 'local'">
-            <form @submit.prevent="saveEdit">
-              <label>
-                Name:
-                <input v-model="editingDoc.data.name" type="text" required />
-              </label>
-              <label>
-                Age:
-                <input v-model.number="editingDoc.data.age" type="number" required />
-              </label>
-              <label>
-                Occupation:
-                <input v-model="editingDoc.data.occupation" type="text" required />
-              </label>
-              <button type="submit">Save</button>
-              <button type="button" @click="cancelEditing">Cancel</button>
-            </form>
+          <div>
+            <strong>ID:</strong> {{ doc.id }}<br />
+            <strong>Name:</strong> {{ doc.doc.name }}<br />
+            <strong>Age:</strong> {{ doc.doc.age }}<br />
+            <strong>Occupation:</strong> {{ doc.doc.occupation }}
+          </div>
+          <div>
+            <button @click="startEditing(doc, 'local')">Edit</button>
+            <button @click="deleteDoc(doc.id, 'local')">Delete</button>
           </div>
         </li>
       </ul>
-      <p v-else>No local documents found.</p>
     </div>
 
+    <!-- Documents distants -->
     <div class="documents">
       <h2>Remote Documents ({{ remoteDocs.length }})</h2>
-      <ul v-if="remoteDocs.length > 0">
+      <ul>
         <li v-for="doc in remoteDocs" :key="doc.id">
-          <strong>ID:</strong> {{ doc.id }} <br />
-          <strong>Name:</strong> {{ doc.doc.name }} <br />
-          <strong>Age:</strong> {{ doc.doc.age }} <br />
-          <strong>Occupation:</strong> {{ doc.doc.occupation }} <br />
-          <button @click="startEditing(doc, 'remote')">Edit</button>
-          <button @click="deleteDoc(doc.id, 'remote')">Delete</button>
-          <!-- Formulaire d'édition -->
-          <div v-if="editingDoc && editingDoc.id === doc.id && editingDoc.source === 'remote'">
-            <form @submit.prevent="saveEdit">
-              <label>
-                Name:
-                <input v-model="editingDoc.data.name" type="text" required />
-              </label>
-              <label>
-                Age:
-                <input v-model.number="editingDoc.data.age" type="number" required />
-              </label>
-              <label>
-                Occupation:
-                <input v-model="editingDoc.data.occupation" type="text" required />
-              </label>
-              <button type="submit">Save</button>
-              <button type="button" @click="cancelEditing">Cancel</button>
-            </form>
+          <div>
+            <strong>ID:</strong> {{ doc.id }}<br />
+            <strong>Name:</strong> {{ doc.doc.name }}<br />
+            <strong>Age:</strong> {{ doc.doc.age }}<br />
+            <strong>Occupation:</strong> {{ doc.doc.occupation }}
+          </div>
+          <div>
+            <button @click="startEditing(doc, 'remote')">Edit</button>
+            <button @click="deleteDoc(doc.id, 'remote')">Delete</button>
           </div>
         </li>
       </ul>
-      <p v-else>No remote documents found.</p>
     </div>
 
     <!-- Message d'erreur -->
@@ -307,72 +272,125 @@ export default {
 </script>
 
 <style>
-.ex {
-  padding: 20px;
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f5f5f5;
+  color: #333;
+  margin: 0;
+  padding: 0;
 }
+
+.ex {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #fff;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
 .buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   margin-bottom: 20px;
 }
-.documents,
-.last-doc,
-.error {
-  margin-top: 20px;
-  padding: 10px;
-  border: 1px solid #ddd;
+
+.buttons button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 15px;
   border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
 }
+
+.buttons button:hover {
+  background-color: #0056b3;
+}
+
+.add-document,
+.documents {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.add-document h2,
+.documents h2 {
+  margin-bottom: 15px;
+  color: #444;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 5px;
+}
+
+.add-document form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.add-document label {
+  display: flex;
+  flex-direction: column;
+  font-weight: bold;
+}
+
+.add-document button {
+  grid-column: span 2;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.add-document button:hover {
+  background-color: #218838;
+}
+
 .documents ul {
   list-style: none;
   padding: 0;
 }
+
 .documents li {
-  margin-bottom: 10px;
-  padding: 5px;
-  border-bottom: 1px solid #ccc;
-}
-.error {
-  color: red;
-  background: #ffe6e6;
-}
-.documents h2 {
-  margin-bottom: 10px;
-}
-.buttons button {
-  margin-right: 10px;
-  margin-bottom: 10px;
-}
-.add-document {
-  margin-bottom: 20px;
-}
-.add-document form {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05);
 }
-.add-document label {
-  display: flex;
-  flex-direction: column;
-}
-.add-document button {
-  align-self: flex-start;
-}
+
 .documents li button {
-  margin-top: 10px;
-  background-color: #ff4d4d;
+  background-color: #dc3545;
   color: white;
   border: none;
   padding: 5px 10px;
   border-radius: 3px;
   cursor: pointer;
+  transition: background-color 0.3s;
 }
+
 .documents li button:hover {
-  background-color: #ff1a1a;
+  background-color: #c82333;
 }
-@media (min-width: 1024px) {
-  .ex {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-  }
+
+.error {
+  color: #721c24;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 20px;
 }
 </style>
